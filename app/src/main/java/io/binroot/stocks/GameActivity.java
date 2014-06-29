@@ -293,9 +293,6 @@ public class GameActivity extends BaseGameActivity {
     }
 
     public void onDestroy() {
-        SharedPreferences sp = getSharedPreferences("vars", getApplicationContext().MODE_PRIVATE);
-        SharedPreferences.Editor editor = sp.edit();
-        editor.remove("curprice");
         super.onDestroy();
     }
 
