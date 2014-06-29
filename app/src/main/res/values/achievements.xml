@@ -9,5 +9,7 @@ Save this file as res/values/games-ids.xml in your project.
     <string name="achievement_all_in">CgkI6MmA6IQKEAIQBA</string>
     <string name="achievement_finance_guru">CgkI6MmA6IQKEAIQBQ</string>
     <string name="achievement_epic_win">CgkI6MmA6IQKEAIQBg</string>
+    <string name="achievement_millionaire">CgkI6MmA6IQKEAIQBw</string>
     <string name="leaderboard_greatest_investors">CgkI6MmA6IQKEAIQAA</string>
+    <string name="achievement_billionaire">CgkI6MmA6IQKEAIQCA</string>
 </resources>

@@ -46,6 +46,7 @@ public class GameActivity extends BaseGameActivity {
     StockPriceView mStockPriceView;
     TextView mSharesText;
     TextView mMoneyText;
+    TextView mCurPriceText;
     private float mMoney = 100.00f;
     private int mShares = 0;
     CardFrontFragment mFrontFragment;
@@ -60,6 +61,11 @@ public class GameActivity extends BaseGameActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
+
+        SharedPreferences sp = getSharedPreferences("vars", getApplicationContext().MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.remove("curprice");
+
         tf1 = Typeface.createFromAsset(this.getAssets(),"fonts/paraaminobenzoic.ttf");
         tf2 = Typeface.createFromAsset(this.getAssets(),"fonts/digital7.ttf");
 
@@ -70,12 +76,14 @@ public class GameActivity extends BaseGameActivity {
         mBuyButton = (Button) findViewById(R.id.buy_button);
         mSharesText = (TextView) findViewById(R.id.shares_text);
         mMoneyText = (TextView) findViewById(R.id.money_text);
+        mCurPriceText = (TextView) findViewById(R.id.cur_price_text);
         mSellButton.setTypeface(tf1);
         mBuyButton.setTypeface(tf1);
         mPlayButton.setTypeface(tf1);
         ((Button)findViewById(R.id.play_button2)).setTypeface(tf1);
         mSharesText.setTypeface(tf2);
         mMoneyText.setTypeface(tf2);
+        mCurPriceText.setTypeface(tf2);
 
         mBackFragment = new CardBackFragment();
         mFrontFragment = new CardFrontFragment();
@@ -187,17 +195,19 @@ public class GameActivity extends BaseGameActivity {
 
     @Override
     public void onBackPressed() {
+        SharedPreferences sp = getSharedPreferences("vars", getApplicationContext().MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.remove("curprice");
+
         if (mShowingBack) {
             playSound(R.raw.start);
             mStockPriceView.clearCanvas();
             mStockPriceView.setRunning(false);
 
-            SharedPreferences sp = getSharedPreferences("vars", MODE_PRIVATE);
             float bestscore = Float.parseFloat(sp.getString("bestscore", "0.0"));
 
             checkAchievements();
             if (mMoney > bestscore) {
-                SharedPreferences.Editor editor = sp.edit();
                 editor.putString("bestscore", mMoney+"");
                 editor.commit();
                 try {
@@ -241,7 +251,7 @@ public class GameActivity extends BaseGameActivity {
             aLeft.setDuration(getResources().getInteger(R.integer.card_flip_time_full));
             aLeft.setInterpolator(new DecelerateInterpolator());
             mPlayButton.startAnimation(aLeft);
-
+            mCurPriceText.setVisibility(View.INVISIBLE);
             flipCard();
         } else {
             super.onBackPressed();
@@ -269,10 +279,32 @@ public class GameActivity extends BaseGameActivity {
                 Games.Achievements.unlock(getApiClient(), getString(R.string.achievement_epic_win));
             } catch (Exception e) {}
         }
+        if (mMoney >= 1000000) {
+            try {
+                Games.Achievements.unlock(getApiClient(), getString(R.string.achievement_millionaire));
+            } catch (Exception e) {}
+        }
+        if (mMoney >= 1000000000) {
+            try {
+                Games.Achievements.unlock(getApiClient(), getString(R.string.achievement_billionaire));
+            } catch (Exception e) {}
+        }
+    }
+
+    public void onDestroy() {
+        SharedPreferences sp = getSharedPreferences("vars", getApplicationContext().MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.remove("curprice");
+        super.onDestroy();
     }
 
     @Override
     public void onPause() {
+        SharedPreferences sp = getSharedPreferences("vars", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putFloat("curprice", mStockPriceView.getCurStockPrice());
+        editor.commit();
+
         super.onPause();
     }
 
@@ -310,7 +342,14 @@ public class GameActivity extends BaseGameActivity {
     public void buyClicked(View view) {
         int moneySpent = (int) mStockPriceView.getCurStockPriceActual();
         if (moneySpent > mMoney) {
-            // TODO: shake animation
+            mMoneyText.setTextColor(getResources().getColor(R.color.buydot));
+            playSound(R.raw.nobuy);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mMoneyText.setTextColor(getResources().getColor(R.color.white));
+                }
+            }, 500);
             return;
         }
         playSound(R.raw.coin);
@@ -347,7 +386,14 @@ public class GameActivity extends BaseGameActivity {
     public void sellClicked(View view) {
         int moneyGained = (int) mStockPriceView.getCurStockPriceActual();
         if (mShares <= 0) {
-            // TODO: shake UI
+            mSharesText.setTextColor(getResources().getColor(R.color.buydot));
+            playSound(R.raw.nobuy);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mSharesText.setTextColor(getResources().getColor(R.color.white));
+                }
+            }, 500);
             return;
         }
         playSound(R.raw.coin2);
@@ -430,37 +476,38 @@ public class GameActivity extends BaseGameActivity {
         aLeft.setDuration(getResources().getInteger(R.integer.card_flip_time_full));
         aLeft.setInterpolator(new DecelerateInterpolator());
         playButton2.startAnimation(aLeft);
-
+        mCurPriceText.setVisibility(View.VISIBLE);
         flipCard();
     }
 
 
-    public void onCurStockPriceUpdated(float curStockPrice) {
-        setSellFill(curStockPrice);
-    }
-
-    public void setSellFill(final float money) {
-
+    public void onCurStockPriceUpdated(final float curStockPrice) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                final ViewGroup.LayoutParams sLayout = mSellYellow.getLayoutParams();
-                final float oldHeight = mSellYellow.getHeight();
-                float newHeight = 0f;
-                if (mShares > 0) newHeight = (money/100.0f) * mSellButton.getHeight();
-                sLayout.height = (int) newHeight;
-                if (sLayout.height > mSellButton.getHeight()) {
-                    sLayout.height = mSellButton.getHeight();
-                } else if (sLayout.height < 0) {
-                    sLayout.height = 0;
-                }
-                final float finalNewHeight = newHeight;
-                mSellYellow.setLayoutParams(sLayout);
-                ScaleAnimation a = new ScaleAnimation(1f, 1f, (oldHeight/ finalNewHeight), 1f, Animation.RELATIVE_TO_SELF, 0f, Animation.RELATIVE_TO_SELF, 1f);
-                a.setDuration(100);
-                mSellYellow.startAnimation(a);
+                setSellFill(curStockPrice);
+                String curStr = "$" + String.format("%.2f", mStockPriceView.getCurStockPriceActual());
+                mCurPriceText.setText(curStr);
             }
         });
+    }
+
+    public void setSellFill(final float money) {
+        final ViewGroup.LayoutParams sLayout = mSellYellow.getLayoutParams();
+        final float oldHeight = mSellYellow.getHeight();
+        float newHeight = 0f;
+        if (mShares > 0) newHeight = (money/100.0f) * mSellButton.getHeight();
+        sLayout.height = (int) newHeight;
+        if (sLayout.height > mSellButton.getHeight()) {
+            sLayout.height = mSellButton.getHeight();
+        } else if (sLayout.height < 0) {
+            sLayout.height = 0;
+        }
+        final float finalNewHeight = newHeight;
+        mSellYellow.setLayoutParams(sLayout);
+        ScaleAnimation a = new ScaleAnimation(1f, 1f, (oldHeight/ finalNewHeight), 1f, Animation.RELATIVE_TO_SELF, 0f, Animation.RELATIVE_TO_SELF, 1f);
+        a.setDuration(100);
+        mSellYellow.startAnimation(a);
     }
 
     public void setBuyFill() {
@@ -481,19 +528,19 @@ public class GameActivity extends BaseGameActivity {
 
         if (mMoney > 100) {
             mBuyButton.setTextColor(getResources().getColor(R.color.white2));
-            mBuyButton.setTypeface(mMoneyText.getTypeface(), Typeface.BOLD);
+            mBuyButton.setTypeface(mBuyButton.getTypeface(), Typeface.BOLD);
             if (mMoney >= 200) {
                 mMoneyText.setTextColor(getResources().getColor(R.color.white2));
                 mMoneyText.setTypeface(mMoneyText.getTypeface(), Typeface.BOLD);
             } else {
                 mMoneyText.setTextColor(getResources().getColor(R.color.white));
-                mMoneyText.setTypeface(mMoneyText.getTypeface(), Typeface.BOLD);
+                mMoneyText.setTypeface(mMoneyText.getTypeface(), Typeface.NORMAL);
             }
         } else {
             mBuyButton.setTextColor(getResources().getColor(R.color.buysell));
-            mBuyButton.setTypeface(mMoneyText.getTypeface(), Typeface.NORMAL);
+            mBuyButton.setTypeface(mBuyButton.getTypeface(), Typeface.NORMAL);
             mMoneyText.setTextColor(getResources().getColor(R.color.white));
-            mMoneyText.setTypeface(mMoneyText.getTypeface(), Typeface.BOLD);
+            mMoneyText.setTypeface(mMoneyText.getTypeface(), Typeface.NORMAL);
         }
     }
 

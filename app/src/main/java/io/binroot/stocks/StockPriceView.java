@@ -1,12 +1,14 @@
 package io.binroot.stocks;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -28,7 +30,7 @@ public class StockPriceView extends SurfaceView implements SurfaceHolder.Callbac
     Paint mBuyDotPaint;
     Path mPriceLine;
     GameThread mGameThread;
-    private float mCurStockPrice = 200.0f;
+    private float mCurStockPrice = 300.0f;
     int mCurTime = 0;
     private int mHeight = 0;
     private boolean mClearCanvas = false;
@@ -95,7 +97,12 @@ public class StockPriceView extends SurfaceView implements SurfaceHolder.Callbac
     public void surfaceCreated(SurfaceHolder holder) {
         setWillNotDraw(false); //Allows us to use invalidate() to call onDraw()
         mHeight = holder.getSurfaceFrame().height();
-        mGameThread = new GameThread(getHolder(), this, new SmoothMarket(mHeight-30)); //Start the thread that
+
+        SharedPreferences sp = mGameActivity.getSharedPreferences("vars", mGameActivity.getApplicationContext().MODE_PRIVATE);
+        float curprice = sp.getFloat("curprice", mHeight-95);
+        mCurStockPrice = curprice;
+
+        mGameThread = new GameThread(getHolder(), this, new SmoothMarket(mCurStockPrice, mHeight)); //Start the thread that
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {

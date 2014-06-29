@@ -12,7 +12,15 @@
         android:layout_height="match_parent"
         android:layout_weight="1">
     </FrameLayout>
-
+    <TextView
+        android:id="@+id/cur_price_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        android:textColor="@color/white"
+        android:textSize="@dimen/text_size"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="20dp"/>
     <FrameLayout
         android:id="@+id/play_frame"
         android:layout_width="match_parent"

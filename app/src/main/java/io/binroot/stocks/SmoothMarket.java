@@ -5,11 +5,12 @@ package io.binroot.stocks;
  */
 public class SmoothMarket implements StockMarketEmulator {
     private float mPrevious = 200;
-    private float mCurrent = 200;
+    private float mCurrent = 100;
     private int mHeight;
 
-    public SmoothMarket(int height) {
-        mHeight = height;
+    public SmoothMarket(float current, int height) {
+        mCurrent = current;
+        mHeight = height - 20;
     }
 
 
