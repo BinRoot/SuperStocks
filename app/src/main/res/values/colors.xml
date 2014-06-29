@@ -1,0 +1,14 @@
+<resources>
+
+    <color name="black_overlay">#66000000</color>
+    <color name="buysell">#398898</color>
+    <color name="priceline">#993999</color>
+    <color name="pricedot">#d939f9</color>
+    <color name="buydot">#f93989</color>
+    <color name="selldot">#49e989</color>
+    <color name="yellow">#fcb447</color>
+    <color name="white">#aaeeff</color>
+    <color name="white2">#fafeff</color>
+    <color name="bestscore">#139e7f</color>
+
+</resources>

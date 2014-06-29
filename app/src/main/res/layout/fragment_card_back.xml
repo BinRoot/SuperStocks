@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <io.binroot.stocks.StockPriceView
+        android:id="@+id/stock_price"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/canvas"
+        android:layout_marginLeft="@dimen/bezel"
+        android:layout_marginRight="@dimen/bezel"
+        android:layout_marginTop="@dimen/bezel"/>
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0.2"
+        android:background="@drawable/grid"
+        android:layout_marginLeft="@dimen/bezel_grid"
+        android:layout_marginRight="@dimen/bezel_grid"
+        android:layout_marginTop="@dimen/bezel"/>
+</FrameLayout>
