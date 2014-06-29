@@ -65,6 +65,10 @@ public class GameActivity extends BaseGameActivity {
         SharedPreferences sp = getSharedPreferences("vars", getApplicationContext().MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
         editor.remove("curprice");
+        mMoney = sp.getFloat("money", 100f);
+        mShares = sp.getInt("shares", 0);
+
+        Log.d(TAG, "on create, "+mMoney+", "+mShares);
 
         tf1 = Typeface.createFromAsset(this.getAssets(),"fonts/paraaminobenzoic.ttf");
         tf2 = Typeface.createFromAsset(this.getAssets(),"fonts/digital7.ttf");
@@ -84,6 +88,9 @@ public class GameActivity extends BaseGameActivity {
         mSharesText.setTypeface(tf2);
         mMoneyText.setTypeface(tf2);
         mCurPriceText.setTypeface(tf2);
+
+        updateSharesText();
+        updateMoneyText();
 
         mBackFragment = new CardBackFragment();
         mFrontFragment = new CardFrontFragment();
@@ -217,12 +224,6 @@ public class GameActivity extends BaseGameActivity {
 
             mBuyPoints.clear();
             mSellPoints.clear();
-            mShares = 0;
-            mMoney = 100;
-            updateMoneyText();
-            updateSharesText();
-            setBuyFill();
-            setSellFill(0);
             findViewById(R.id.play_frame).setVisibility(View.VISIBLE);
             findViewById(R.id.buysell_frame).setVisibility(View.GONE);
 
@@ -302,7 +303,9 @@ public class GameActivity extends BaseGameActivity {
     public void onPause() {
         SharedPreferences sp = getSharedPreferences("vars", MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
-        editor.putFloat("curprice", mStockPriceView.getCurStockPrice());
+        if (mStockPriceView != null) editor.putFloat("curprice", mStockPriceView.getCurStockPrice());
+        editor.putFloat("money", mMoney);
+        editor.putInt("shares", mShares);
         editor.commit();
 
         super.onPause();
