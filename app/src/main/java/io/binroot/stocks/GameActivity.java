@@ -10,6 +10,7 @@ import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -193,26 +194,8 @@ public class GameActivity extends BaseGameActivity {
 
             SharedPreferences sp = getSharedPreferences("vars", MODE_PRIVATE);
             float bestscore = Float.parseFloat(sp.getString("bestscore", "0.0"));
-            if (mMoney > 100) {
-                try {
-                    Games.Achievements.unlock(getApiClient(), getString(R.string.achievement_break_even));
-                } catch (Exception e) {}
-            }
-            if (mMoney >= 200) {
-                try {
-                    Games.Achievements.unlock(getApiClient(), getString(R.string.achievement_double_the_fun));
-                } catch (Exception e) {}
-            }
-            if (mMoney >= 500) {
-                try {
-                    Games.Achievements.unlock(getApiClient(), getString(R.string.achievement_finance_guru));
-                } catch (Exception e) {}
-            }
-            if (mMoney >= 1000) {
-                try {
-                    Games.Achievements.unlock(getApiClient(), getString(R.string.achievement_epic_win));
-                } catch (Exception e) {}
-            }
+
+            checkAchievements();
             if (mMoney > bestscore) {
                 SharedPreferences.Editor editor = sp.edit();
                 editor.putString("bestscore", mMoney+"");
@@ -265,6 +248,28 @@ public class GameActivity extends BaseGameActivity {
         }
     }
 
+    public void checkAchievements() {
+        if (mMoney > 100) {
+            try {
+                Games.Achievements.unlock(getApiClient(), getString(R.string.achievement_break_even));
+            } catch (Exception e) {}
+        }
+        if (mMoney >= 200) {
+            try {
+                Games.Achievements.unlock(getApiClient(), getString(R.string.achievement_double_the_fun));
+            } catch (Exception e) {}
+        }
+        if (mMoney >= 500) {
+            try {
+                Games.Achievements.unlock(getApiClient(), getString(R.string.achievement_finance_guru));
+            } catch (Exception e) {}
+        }
+        if (mMoney >= 1000) {
+            try {
+                Games.Achievements.unlock(getApiClient(), getString(R.string.achievement_epic_win));
+            } catch (Exception e) {}
+        }
+    }
 
     @Override
     public void onPause() {
@@ -380,6 +385,7 @@ public class GameActivity extends BaseGameActivity {
             } catch (Exception e) {}
         }
 
+        checkAchievements();
     }
 
     public void playClicked(final View v) {
