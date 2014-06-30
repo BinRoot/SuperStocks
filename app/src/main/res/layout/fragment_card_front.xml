@@ -27,7 +27,8 @@
         android:layout_height="wrap_content"
         android:layout_weight="1">
         <Button
-            style="@android:style/Widget.Holo.Button"
+            android:background="@drawable/border_xml"
+            android:textColor="@color/white2"
             android:id="@+id/leaderboard_button"
             android:text="Leaderboard"
             android:layout_gravity="center_horizontal|bottom"
@@ -41,8 +42,11 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:layout_weight="1">
         <Button
+            android:background="@drawable/border_xml"
+            android:textColor="@color/white2"
             style="@android:style/Widget.Holo.Button"
             android:id="@+id/achievements_button"
             android:text="Achievements"

@@ -63,12 +63,9 @@ public class GameActivity extends BaseGameActivity {
         setContentView(R.layout.activity_game);
 
         SharedPreferences sp = getSharedPreferences("vars", getApplicationContext().MODE_PRIVATE);
-        SharedPreferences.Editor editor = sp.edit();
-        editor.remove("curprice");
         mMoney = sp.getFloat("money", 100f);
         mShares = sp.getInt("shares", 0);
 
-        Log.d(TAG, "on create, "+mMoney+", "+mShares);
 
         tf1 = Typeface.createFromAsset(this.getAssets(),"fonts/paraaminobenzoic.ttf");
         tf2 = Typeface.createFromAsset(this.getAssets(),"fonts/digital7.ttf");
@@ -204,9 +201,9 @@ public class GameActivity extends BaseGameActivity {
     public void onBackPressed() {
         SharedPreferences sp = getSharedPreferences("vars", getApplicationContext().MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
-        editor.remove("curprice");
 
         if (mShowingBack) {
+            saveCurPrice();
             playSound(R.raw.start);
             mStockPriceView.clearCanvas();
             mStockPriceView.setRunning(false);
@@ -298,14 +295,23 @@ public class GameActivity extends BaseGameActivity {
 
     @Override
     public void onPause() {
+        saveCurPrice();
         SharedPreferences sp = getSharedPreferences("vars", MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
-        if (mStockPriceView != null) editor.putFloat("curprice", mStockPriceView.getCurStockPrice());
         editor.putFloat("money", mMoney);
         editor.putInt("shares", mShares);
         editor.commit();
 
         super.onPause();
+    }
+
+    public void saveCurPrice() {
+        SharedPreferences sp = getSharedPreferences("vars", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        if (mStockPriceView != null) {
+            editor.putFloat("curprice", mStockPriceView.getCurStockPrice());
+            editor.commit();
+        }
     }
 
     @Override
@@ -327,7 +333,7 @@ public class GameActivity extends BaseGameActivity {
         try {
             startActivityForResult(Games.Leaderboards.getLeaderboardIntent(getApiClient(), LEADERBOARD_ID), REQUEST_LEADERBOARD);
         } catch (Exception e) {
-            Toast.makeText(getApplicationContext(), "Nuts! Couldn't connect to Google Play.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Nuts! Couldn't connect to Google Play.", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -335,7 +341,7 @@ public class GameActivity extends BaseGameActivity {
         try {
             startActivityForResult(Games.Achievements.getAchievementsIntent(getApiClient()), REQUEST_ACHIEVEMENTS);
         } catch (Exception e) {
-            Toast.makeText(getApplicationContext(), "Nuts! Couldn't connect to Google Play.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Nuts! Couldn't connect to Google Play.", Toast.LENGTH_SHORT).show();
         }
     }
 
