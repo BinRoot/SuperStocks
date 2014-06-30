@@ -18,7 +18,7 @@ public class SmoothMarket implements StockMarketEmulator {
     public float next() {
         float newVal = mCurrent;
         if (Math.abs(mPrevious - mCurrent) <= 1) {
-            newVal += Math.random()*7;
+            newVal += Math.random()*5;
         } else {
             newVal -= Math.random()*30-15;
         }
