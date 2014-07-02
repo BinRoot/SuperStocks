@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.PointF;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,6 +15,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
@@ -66,7 +68,6 @@ public class GameActivity extends BaseGameActivity {
         mMoney = sp.getFloat("money", 100f);
         mShares = sp.getInt("shares", 0);
 
-
         tf1 = Typeface.createFromAsset(this.getAssets(),"fonts/paraaminobenzoic.ttf");
         tf2 = Typeface.createFromAsset(this.getAssets(),"fonts/digital7.ttf");
 
@@ -85,6 +86,22 @@ public class GameActivity extends BaseGameActivity {
         mSharesText.setTypeface(tf2);
         mMoneyText.setTypeface(tf2);
         mCurPriceText.setTypeface(tf2);
+
+        mBuyButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                buyClicked(null);
+                return true;
+            }
+        });
+
+        mSellButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                sellClicked(null);
+                return true;
+            }
+        });
 
         updateSharesText();
         updateMoneyText();
@@ -345,9 +362,18 @@ public class GameActivity extends BaseGameActivity {
         }
     }
 
+
     public void buyClicked(View view) {
-        int moneySpent = (int) mStockPriceView.getCurStockPriceActual();
-        if (moneySpent > mMoney) {
+        ScaleAnimation aClick = new ScaleAnimation(
+                1, 1.1f, 1, 1,
+                Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        aClick.setDuration(100);
+        mBuyButton.startAnimation(aClick);
+        int curPrice = (int) mStockPriceView.getCurStockPriceActual();
+        int moneySpent = curPrice;
+        if (view == null) moneySpent = curPrice * (((int)mMoney) / curPrice);
+        Log.d(TAG, "money spend: "+moneySpent+", money: "+mMoney+", cur price: "+curPrice);
+        if (moneySpent > mMoney || moneySpent == 0) {
             mMoneyText.setTextColor(getResources().getColor(R.color.buydot));
             playSound(R.raw.nobuy);
             new Handler().postDelayed(new Runnable() {
@@ -358,7 +384,7 @@ public class GameActivity extends BaseGameActivity {
             }, 500);
             return;
         }
-        playSound(R.raw.coin);
+        if (view == null) playSound(R.raw.buyall); else playSound(R.raw.coin);
         mBuyPoints.add(new PointF(mStockPriceView.mCurTime, mStockPriceView.getCurStockPrice()));
         if (mBuyPoints.size() > 100) {
             for (int i = 0; i < 50; i++) {
@@ -366,8 +392,11 @@ public class GameActivity extends BaseGameActivity {
             }
         }
 
+        int newShares = 1;
+        if (view == null) newShares = ((int)mMoney) / ((int)mStockPriceView.getCurStockPriceActual());
+
         mMoney -= moneySpent;
-        mShares++;
+        mShares = mShares + newShares;
         updateMoneyText();
         updateSharesText();
 
@@ -377,20 +406,18 @@ public class GameActivity extends BaseGameActivity {
             } catch (Exception e) {}
         }
 
-        if (mSellYellow.getHeight() < mSellButton.getHeight()) {
-            ViewGroup.LayoutParams sLayout = mSellYellow.getLayoutParams();
-            sLayout.height = mSellYellow.getHeight() + moneySpent;
-            if (sLayout.height > mSellButton.getHeight()) {
-                sLayout.height = mSellButton.getHeight();
-            }
-            mSellYellow.setLayoutParams(sLayout);
-        }
-
         setBuyFill();
+        setSellFill();
     }
 
     public void sellClicked(View view) {
+        ScaleAnimation aClick = new ScaleAnimation(
+                1, 1.1f, 1, 1,
+                Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        aClick.setDuration(100);
+        mSellButton.startAnimation(aClick);
         int moneyGained = (int) mStockPriceView.getCurStockPriceActual();
+        if (view == null) moneyGained = (int) (mShares * mStockPriceView.getCurStockPriceActual());
         if (mShares <= 0) {
             mSharesText.setTextColor(getResources().getColor(R.color.buydot));
             playSound(R.raw.nobuy);
@@ -402,7 +429,7 @@ public class GameActivity extends BaseGameActivity {
             }, 500);
             return;
         }
-        playSound(R.raw.coin2);
+        if (view == null) playSound(R.raw.sellall); else playSound(R.raw.coin2);
         mSellPoints.add(new PointF(mStockPriceView.mCurTime, mStockPriceView.getCurStockPrice()));
         if (mSellPoints.size() > 100) {
             for (int i = 0; i < 50; i++) {
@@ -411,20 +438,12 @@ public class GameActivity extends BaseGameActivity {
         }
 
         mMoney += moneyGained;
-        mShares--;
+        if (view == null) mShares = 0; else mShares--;
         updateMoneyText();
         updateSharesText();
 
         setBuyFill();
-
-        if (mSellYellow.getHeight() > 0) {
-            ViewGroup.LayoutParams sLayout = mSellYellow.getLayoutParams();
-            sLayout.height = mSellYellow.getHeight() - moneyGained;
-            if (sLayout.height < 0) {
-                sLayout.height = 0;
-            }
-            mSellYellow.setLayoutParams(sLayout);
-        }
+        setSellFill();
 
         SharedPreferences sp = getSharedPreferences("vars", MODE_PRIVATE);
         float bestscore = Float.parseFloat(sp.getString("bestscore", "0.0"));
@@ -486,40 +505,65 @@ public class GameActivity extends BaseGameActivity {
         flipCard();
     }
 
-
+    boolean ranOnce = false;
     public void onCurStockPriceUpdated(final float curStockPrice) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                setSellFill(curStockPrice);
+                if (!ranOnce) {
+                    setSellFill();
+                    setBuyFill();
+                    ranOnce = true;
+                }
                 String curStr = "$" + String.format("%.2f", mStockPriceView.getCurStockPriceActual());
                 mCurPriceText.setText(curStr);
             }
         });
     }
 
-    public void setSellFill(final float money) {
-        final ViewGroup.LayoutParams sLayout = mSellYellow.getLayoutParams();
-        final float oldHeight = mSellYellow.getHeight();
-        float newHeight = 0f;
-        if (mShares > 0) newHeight = (money/100.0f) * mSellButton.getHeight();
+    public void setSellFill() {
+        ViewGroup.LayoutParams sLayout = mSellYellow.getLayoutParams();
+        float oldHeight = mSellYellow.getHeight();
+        float newHeight = ((mShares+0.0f)/10.0f) * mSellButton.getHeight();
+        Log.d(TAG, "setting height: "+newHeight);
         sLayout.height = (int) newHeight;
-        if (sLayout.height > mSellButton.getHeight()) {
-            sLayout.height = mSellButton.getHeight();
-        } else if (sLayout.height < 0) {
+        if (sLayout.height < 0) {
             sLayout.height = 0;
         }
-        final float finalNewHeight = newHeight;
+        if (sLayout.height > mSellButton.getHeight()) {
+            sLayout.height = mSellButton.getHeight();
+        }
         mSellYellow.setLayoutParams(sLayout);
-        ScaleAnimation a = new ScaleAnimation(1f, 1f, (oldHeight/ finalNewHeight), 1f, Animation.RELATIVE_TO_SELF, 0f, Animation.RELATIVE_TO_SELF, 1f);
-        a.setDuration(100);
-        mSellYellow.startAnimation(a);
+
+        if (!(oldHeight == mSellButton.getHeight() && newHeight >= oldHeight)) {
+            ScaleAnimation a = new ScaleAnimation(1f, 1f, (oldHeight / newHeight), 1f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 1f);
+            a.setDuration(500);
+            a.setInterpolator(new BounceInterpolator());
+            mSellYellow.startAnimation(a);
+        }
+
+        if (mShares > 10) {
+            mSellButton.setTextColor(getResources().getColor(R.color.white2));
+            mSellButton.setTypeface(mSellButton.getTypeface(), Typeface.BOLD);
+            if (mShares >= 20) {
+                mSharesText.setTextColor(getResources().getColor(R.color.white2));
+                mSharesText.setTypeface(mSharesText.getTypeface(), Typeface.BOLD);
+            } else {
+                mSharesText.setTextColor(getResources().getColor(R.color.white));
+                mSharesText.setTypeface(mSharesText.getTypeface(), Typeface.NORMAL);
+            }
+        } else {
+            mSellButton.setTextColor(getResources().getColor(R.color.buysell));
+            mSellButton.setTypeface(mSellButton.getTypeface(), Typeface.NORMAL);
+            mSharesText.setTextColor(getResources().getColor(R.color.white));
+            mSharesText.setTypeface(mSharesText.getTypeface(), Typeface.NORMAL);
+        }
     }
 
     public void setBuyFill() {
         ViewGroup.LayoutParams bLayout = mBuyYellow.getLayoutParams();
         float oldHeight = mBuyYellow.getHeight();
-        float newHeight = (mMoney/100.0f) * mBuyButton.getHeight();
+        float newHeight = ((mMoney+0.0f)/100.0f) * mBuyButton.getHeight();
         bLayout.height = (int) newHeight;
         if (bLayout.height > mBuyButton.getHeight()) {
             bLayout.height = mBuyButton.getHeight();
@@ -527,10 +571,13 @@ public class GameActivity extends BaseGameActivity {
             bLayout.height = 0;
         }
         mBuyYellow.setLayoutParams(bLayout);
-        ScaleAnimation a = new ScaleAnimation(1f, 1f, (oldHeight/newHeight), 1f, Animation.RELATIVE_TO_SELF, 0f, Animation.RELATIVE_TO_SELF, 1f);
-        a.setDuration(500);
-        a.setInterpolator(new BounceInterpolator());
-        mBuyYellow.startAnimation(a);
+
+        if (mMoney <= 100) {
+            ScaleAnimation a = new ScaleAnimation(1f, 1f, (oldHeight / newHeight), 1f, Animation.RELATIVE_TO_SELF, 0f, Animation.RELATIVE_TO_SELF, 1f);
+            a.setDuration(500);
+            a.setInterpolator(new BounceInterpolator());
+            mBuyYellow.startAnimation(a);
+        }
 
         if (mMoney > 100) {
             mBuyButton.setTextColor(getResources().getColor(R.color.white2));
