@@ -8,20 +8,30 @@
     android:layout_marginTop="@dimen/bezel"
     android:orientation="vertical"
     android:background="@color/white2">
-    <FrameLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1">
         <TextView
-            android:id="@+id/text_bestscore"
+            android:id="@+id/text_bestscore_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_centerHorizontal="true"
             android:paddingTop="20dp"
             android:textColor="@color/bestscore"
             android:textSize="@dimen/text_bestscore"
             android:text="Best Score: "/>
-    </FrameLayout>
+        <TextView
+            android:id="@+id/text_bestscore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:paddingTop="5dp"
+            android:textColor="@color/bestscore"
+            android:textSize="@dimen/text_bestscore"
+            android:layout_below="@id/text_bestscore_text"
+            android:text="$ --"/>
+    </RelativeLayout>
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

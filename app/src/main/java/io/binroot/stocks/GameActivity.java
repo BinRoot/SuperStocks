@@ -49,7 +49,7 @@ public class GameActivity extends BaseGameActivity {
     TextView mSharesText;
     TextView mMoneyText;
     TextView mCurPriceText;
-    private float mMoney = 100.00f;
+    private double mMoney = 100;
     private int mShares = 0;
     CardFrontFragment mFrontFragment;
     CardBackFragment mBackFragment;
@@ -64,8 +64,10 @@ public class GameActivity extends BaseGameActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
+        Log.d(TAG, "max float: "+Float.MAX_VALUE);
+
         SharedPreferences sp = getSharedPreferences("vars", getApplicationContext().MODE_PRIVATE);
-        mMoney = sp.getFloat("money", 100f);
+        mMoney = sp.getFloat("money", 2000000000f);
         mShares = sp.getInt("shares", 0);
 
         tf1 = Typeface.createFromAsset(this.getAssets(),"fonts/paraaminobenzoic.ttf");
@@ -163,6 +165,7 @@ public class GameActivity extends BaseGameActivity {
         Button mLeaderboardButton;
         Button mAchievementsButton;
         TextView mBestScore;
+        TextView mBestScoreText;
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -181,6 +184,7 @@ public class GameActivity extends BaseGameActivity {
                     mLeaderboardButton.setVisibility(View.GONE);
                     mAchievementsButton.setVisibility(View.GONE);
                     mBestScore.setVisibility(View.GONE);
+                    mBestScoreText.setVisibility(View.GONE);
                 }
             }, getResources().getInteger(R.integer.card_flip_time_half));
 
@@ -190,12 +194,15 @@ public class GameActivity extends BaseGameActivity {
         public void onResume() {
             super.onResume();
             mBestScore = (TextView) getView().findViewById(R.id.text_bestscore);
+            mBestScoreText = (TextView) getView().findViewById(R.id.text_bestscore_text);
             SharedPreferences sp = getActivity().getSharedPreferences("vars", MODE_PRIVATE);
             float bestscore = Float.parseFloat(sp.getString("bestscore", "0.0"));
             String bestscoreStr = "$" + String.format("%.2f", bestscore);
-            mBestScore.setText("Best Score: " + " " + bestscoreStr);
+            mBestScore.setText(bestscoreStr);
 
             mBestScore.setTypeface(((GameActivity)getActivity()).tf2);
+            mBestScoreText.setTypeface(((GameActivity)getActivity()).tf1);
+
         }
     }
 
@@ -315,7 +322,7 @@ public class GameActivity extends BaseGameActivity {
         saveCurPrice();
         SharedPreferences sp = getSharedPreferences("vars", MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
-        editor.putFloat("money", mMoney);
+        editor.putFloat("money", (float)mMoney);
         editor.putInt("shares", mShares);
         editor.commit();
 
@@ -369,10 +376,9 @@ public class GameActivity extends BaseGameActivity {
                 Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
         aClick.setDuration(100);
         mBuyButton.startAnimation(aClick);
-        int curPrice = (int) mStockPriceView.getCurStockPriceActual();
-        int moneySpent = curPrice;
-        if (view == null) moneySpent = curPrice * (((int)mMoney) / curPrice);
-        Log.d(TAG, "money spend: "+moneySpent+", money: "+mMoney+", cur price: "+curPrice);
+        float curPrice = mStockPriceView.getCurStockPriceActual();
+        float moneySpent = curPrice;
+        if (view == null) moneySpent = curPrice * ((int)(mMoney / curPrice));
         if (moneySpent > mMoney || moneySpent == 0) {
             mMoneyText.setTextColor(getResources().getColor(R.color.buydot));
             playSound(R.raw.nobuy);
@@ -393,8 +399,9 @@ public class GameActivity extends BaseGameActivity {
         }
 
         int newShares = 1;
-        if (view == null) newShares = ((int)mMoney) / ((int)mStockPriceView.getCurStockPriceActual());
+        if (view == null) newShares = (int) (mMoney / mStockPriceView.getCurStockPriceActual());
 
+        Log.d(TAG, "money: "+mMoney+", spent: "+moneySpent+ ", outcome: "+(mMoney - moneySpent));
         mMoney -= moneySpent;
         mShares = mShares + newShares;
         updateMoneyText();
@@ -416,8 +423,8 @@ public class GameActivity extends BaseGameActivity {
                 Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
         aClick.setDuration(100);
         mSellButton.startAnimation(aClick);
-        int moneyGained = (int) mStockPriceView.getCurStockPriceActual();
-        if (view == null) moneyGained = (int) (mShares * mStockPriceView.getCurStockPriceActual());
+        float moneyGained = (int) mStockPriceView.getCurStockPriceActual();
+        if (view == null) moneyGained = (mShares * mStockPriceView.getCurStockPriceActual());
         if (mShares <= 0) {
             mSharesText.setTextColor(getResources().getColor(R.color.buydot));
             playSound(R.raw.nobuy);
@@ -563,7 +570,7 @@ public class GameActivity extends BaseGameActivity {
     public void setBuyFill() {
         ViewGroup.LayoutParams bLayout = mBuyYellow.getLayoutParams();
         float oldHeight = mBuyYellow.getHeight();
-        float newHeight = ((mMoney+0.0f)/100.0f) * mBuyButton.getHeight();
+        float newHeight = (((float)mMoney+0.0f)/100.0f) * mBuyButton.getHeight();
         bLayout.height = (int) newHeight;
         if (bLayout.height > mBuyButton.getHeight()) {
             bLayout.height = mBuyButton.getHeight();
@@ -572,7 +579,7 @@ public class GameActivity extends BaseGameActivity {
         }
         mBuyYellow.setLayoutParams(bLayout);
 
-        if (mMoney <= 100) {
+        if (!(oldHeight == mBuyButton.getHeight() && newHeight >= oldHeight)) {
             ScaleAnimation a = new ScaleAnimation(1f, 1f, (oldHeight / newHeight), 1f, Animation.RELATIVE_TO_SELF, 0f, Animation.RELATIVE_TO_SELF, 1f);
             a.setDuration(500);
             a.setInterpolator(new BounceInterpolator());
