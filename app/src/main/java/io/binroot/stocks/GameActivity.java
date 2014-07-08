@@ -31,6 +31,7 @@ import android.widget.Toast;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -50,7 +51,7 @@ public class GameActivity extends BaseGameActivity {
     TextView mMoneyText;
     TextView mCurPriceText;
     private double mMoney = 100;
-    private int mShares = 0;
+    private long mShares = 0;
     CardFrontFragment mFrontFragment;
     CardBackFragment mBackFragment;
     Typeface tf1;
@@ -67,8 +68,18 @@ public class GameActivity extends BaseGameActivity {
         Log.d(TAG, "max float: "+Float.MAX_VALUE);
 
         SharedPreferences sp = getSharedPreferences("vars", getApplicationContext().MODE_PRIVATE);
-        mMoney = sp.getFloat("money", 2000000000f);
-        mShares = sp.getInt("shares", 0);
+        mMoney = sp.getFloat("money", 100f);
+        if (sp.contains("shares")) {
+            SharedPreferences.Editor editor = sp.edit();
+            mShares = sp.getInt("shares", 0);
+            if (mShares < 0) {
+                mShares = 1000000;
+            }
+            editor.remove("shares");
+            editor.commit();
+        } else {
+            mShares = sp.getLong("shares-long", 0);
+        }
 
         tf1 = Typeface.createFromAsset(this.getAssets(),"fonts/paraaminobenzoic.ttf");
         tf2 = Typeface.createFromAsset(this.getAssets(),"fonts/digital7.ttf");
@@ -311,6 +322,11 @@ public class GameActivity extends BaseGameActivity {
                 Games.Achievements.unlock(getApiClient(), getString(R.string.achievement_billionaire));
             } catch (Exception e) {}
         }
+        if (mMoney >= 9223372036854d) {
+            try {
+                Games.Achievements.unlock(getApiClient(), getString(R.string.achievement_broken_leaderboard));
+            } catch (Exception e) {}
+        }
     }
 
     public void onDestroy() {
@@ -323,7 +339,7 @@ public class GameActivity extends BaseGameActivity {
         SharedPreferences sp = getSharedPreferences("vars", MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
         editor.putFloat("money", (float)mMoney);
-        editor.putInt("shares", mShares);
+        editor.putLong("shares-long", mShares);
         editor.commit();
 
         super.onPause();
@@ -344,12 +360,22 @@ public class GameActivity extends BaseGameActivity {
     }
 
     private void updateMoneyText() {
-        String moneyStr = "$" + String.format("%.2f", mMoney);
+        String moneyStr;
+        if (mMoney > 1000000000) {
+            moneyStr = "$" + String.format("%6.3e", mMoney);
+        } else {
+            moneyStr = "$" + String.format("%.2f", mMoney);
+        }
         mMoneyText.setText(moneyStr);
     }
 
     private void updateSharesText() {
-        String sharesStr = mShares + " " + (mShares == 1 ? "Share" : "Shares");
+        String sharesStr;
+        if (mShares > 1000000) {
+            sharesStr = String.format("%6.3e", mShares) + " Shares";
+        } else {
+            sharesStr = mShares + " " + (mShares == 1 ? "Share" : "Shares");
+        }
         mSharesText.setText(sharesStr);
     }
 
@@ -377,8 +403,8 @@ public class GameActivity extends BaseGameActivity {
         aClick.setDuration(100);
         mBuyButton.startAnimation(aClick);
         float curPrice = mStockPriceView.getCurStockPriceActual();
-        float moneySpent = curPrice;
-        if (view == null) moneySpent = curPrice * ((int)(mMoney / curPrice));
+        double moneySpent = curPrice;
+        if (view == null) moneySpent = curPrice * ((long)(mMoney / curPrice));
         if (moneySpent > mMoney || moneySpent == 0) {
             mMoneyText.setTextColor(getResources().getColor(R.color.buydot));
             playSound(R.raw.nobuy);
@@ -398,12 +424,12 @@ public class GameActivity extends BaseGameActivity {
             }
         }
 
-        int newShares = 1;
-        if (view == null) newShares = (int) (mMoney / mStockPriceView.getCurStockPriceActual());
+        long newShares = 1;
+        if (view == null) newShares = (long) (mMoney / mStockPriceView.getCurStockPriceActual());
 
         Log.d(TAG, "money: "+mMoney+", spent: "+moneySpent+ ", outcome: "+(mMoney - moneySpent));
         mMoney -= moneySpent;
-        mShares = mShares + newShares;
+        mShares += newShares;
         updateMoneyText();
         updateSharesText();
 

@@ -12,4 +12,5 @@ Save this file as res/values/games-ids.xml in your project.
     <string name="achievement_millionaire">CgkI6MmA6IQKEAIQBw</string>
     <string name="leaderboard_greatest_investors">CgkI6MmA6IQKEAIQAA</string>
     <string name="achievement_billionaire">CgkI6MmA6IQKEAIQCA</string>
+    <string name="achievement_broken_leaderboard">CgkI6MmA6IQKEAIQCQ</string>
 </resources>
