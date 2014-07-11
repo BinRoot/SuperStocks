@@ -19,6 +19,7 @@ import android.view.ViewTreeObserver;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
+import android.view.animation.AnimationUtils;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.ScaleAnimation;
@@ -59,6 +60,12 @@ public class GameActivity extends BaseGameActivity {
     private boolean mShowingBack = false;
     ArrayList<PointF> mBuyPoints = new ArrayList<PointF>();
     ArrayList<PointF> mSellPoints = new ArrayList<PointF>();
+    Animation mShakeAnimation;
+    Animation mShakeAnimation2;
+    Animation mShakeAnimation3;
+    Animation mShakeAnimation4;
+    Animation mShakeAnimation5;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +106,12 @@ public class GameActivity extends BaseGameActivity {
         mSharesText.setTypeface(tf2);
         mMoneyText.setTypeface(tf2);
         mCurPriceText.setTypeface(tf2);
+
+        mShakeAnimation = AnimationUtils.loadAnimation(this, R.anim.shake);
+        mShakeAnimation2 = AnimationUtils.loadAnimation(this, R.anim.shake2);
+        mShakeAnimation3 = AnimationUtils.loadAnimation(this, R.anim.shake3);
+        mShakeAnimation4 = AnimationUtils.loadAnimation(this, R.anim.shake4);
+        mShakeAnimation5 = AnimationUtils.loadAnimation(this, R.anim.shake5);
 
         mBuyButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -618,15 +631,39 @@ public class GameActivity extends BaseGameActivity {
             if (mMoney >= 200) {
                 mMoneyText.setTextColor(getResources().getColor(R.color.white2));
                 mMoneyText.setTypeface(mMoneyText.getTypeface(), Typeface.BOLD);
+
+                if (mMoney >= 500) {
+                    if (mMoney >= 1000) {
+                        if (mMoney >= 1000000) {
+                            if (mMoney >= 1000000000) {
+                                if (mMoney >= 9223372036854d) {
+                                    if (mStockPriceView.getAnimation() == null || !mStockPriceView.getAnimation().equals(mShakeAnimation5)) mStockPriceView.startAnimation(mShakeAnimation5);
+                                } else {
+                                    if (mStockPriceView.getAnimation() == null || !mStockPriceView.getAnimation().equals(mShakeAnimation4)) mStockPriceView.startAnimation(mShakeAnimation4);
+                                }
+                            } else {
+                                if (mStockPriceView.getAnimation() == null || !mStockPriceView.getAnimation().equals(mShakeAnimation3)) mStockPriceView.startAnimation(mShakeAnimation3);
+                            }
+                        } else {
+                            if (mStockPriceView.getAnimation() == null || !mStockPriceView.getAnimation().equals(mShakeAnimation2)) mStockPriceView.startAnimation(mShakeAnimation2);
+                        }
+                    } else {
+                        if (mStockPriceView.getAnimation() == null || !mStockPriceView.getAnimation().equals(mShakeAnimation)) mStockPriceView.startAnimation(mShakeAnimation);
+                    }
+                } else {
+                    mStockPriceView.clearAnimation();
+                }
             } else {
                 mMoneyText.setTextColor(getResources().getColor(R.color.white));
                 mMoneyText.setTypeface(mMoneyText.getTypeface(), Typeface.NORMAL);
+                mStockPriceView.clearAnimation();
             }
         } else {
             mBuyButton.setTextColor(getResources().getColor(R.color.buysell));
             mBuyButton.setTypeface(mBuyButton.getTypeface(), Typeface.NORMAL);
             mMoneyText.setTextColor(getResources().getColor(R.color.white));
             mMoneyText.setTypeface(mMoneyText.getTypeface(), Typeface.NORMAL);
+            mStockPriceView.clearAnimation();
         }
     }
 
